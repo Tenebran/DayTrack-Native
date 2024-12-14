@@ -1,20 +1,40 @@
-import { View, StyleSheet, Text, TextInput } from 'react-native';
+import { View, StyleSheet, Text, TextInput, Button } from 'react-native';
 import React, { useState } from 'react';
 import Checkbox from 'expo-checkbox';
+import { v1 } from 'uuid';
+import { title } from 'process';
 
 export default function HomeScreen() {
-  const [value, setValue] = useState('TextInput');
+  const [value, setValue] = useState<string>('');
+  const [newValue, setNewValue] = useState<string>('');
+  const [openChanger, setOpenChanger] = useState<{ id: string }>({
+    id: '',
+  });
 
   const [tasks, setTasks] = useState([
-    { id: 1, title: 'HTML', isDone: true },
-    { id: 2, title: 'JS', isDone: false },
-    { id: 3, title: 'CSS', isDone: true },
-    { id: 4, title: 'React', isDone: true },
-    { id: 5, title: 'ReactNative', isDone: false },
+    { id: v1(), title: 'HTML', isDone: true },
+    { id: v1(), title: 'JS', isDone: false },
+    { id: v1(), title: 'CSS', isDone: true },
+    { id: v1(), title: 'React', isDone: true },
+    { id: v1(), title: 'ReactNative', isDone: false },
   ]);
 
-  const taskStatusChangeHandler = (id: number) => {
+  const taskStatusChangeHandler = (id: string) => {
     setTasks(tasks.map((list) => (list.id === id ? { ...list, isDone: !list.isDone } : list)));
+  };
+
+  const deleteTask = (id: string) => {
+    setTasks(tasks.filter((task) => task.id !== id));
+  };
+
+  const addTaskHandler = () => {
+    setTasks([{ id: v1(), title: value, isDone: false }, ...tasks]);
+  };
+
+  const changeTaskTitle = (id: string) => {
+    setTasks(tasks.map((list) => (list.id === id ? { ...list, title: newValue } : list)));
+    setOpenChanger({ id: '' });
+    setNewValue('');
   };
 
   return (
@@ -24,14 +44,29 @@ export default function HomeScreen() {
         value={value}
         onChangeText={setValue}
       />
+      <Button onPress={addTaskHandler} title="Add" />
       <View style={styles.boxContainer}>
         {tasks.map((task) => {
           return (
             <View key={task.id} style={[styles.boxTask, globalStyles.border]}>
-              <Checkbox
-                value={task.isDone}
-                onValueChange={() => taskStatusChangeHandler(task.id)}></Checkbox>
-              <Text>{task.title}</Text>
+              {openChanger.id === task.id ? (
+                <>
+                  <TextInput
+                    style={[globalStyles.border, styles.input]}
+                    value={newValue}
+                    onChangeText={setNewValue}
+                  />
+                  <Button onPress={() => changeTaskTitle(task.id)} title="save" />
+                </>
+              ) : (
+                <>
+                  <Checkbox
+                    value={task.isDone}
+                    onValueChange={() => taskStatusChangeHandler(task.id)}></Checkbox>
+                  <Text onPress={() => setOpenChanger({ id: task.id })}>{task.title}</Text>
+                  <Button onPress={() => deleteTask(task.id)} title="delete" />
+                </>
+              )}
             </View>
           );
         })}
